@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "openzeppelin/contracts/access/Ownable.sol";
 import "openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./ReportManager.sol";
 
 contract DecenSocialAccount is ERC721, Ownable {
     uint256 public nextTokenId;
@@ -21,9 +22,13 @@ contract DecenSocialAccount is ERC721, Ownable {
     // Address of the DecenSocialToken (DST00) contract
     IERC20 public socialToken;
 
+    ReportManager private reportManager;
+
     // Fee for account verification in DST00 tokens
     uint256 public verificationFee;
 
+    // Mapping to store follow fees for each account
+    mapping(uint256 => uint256) private followFees;
 
 
     constructor(IERC20 _socialToken) ERC721("DecenSocialAccount", "DSA") {
@@ -51,9 +56,15 @@ contract DecenSocialAccount is ERC721, Ownable {
     }
 
     // Login function to check if msg.sender owns an account with the provided username
-    function login(string calldata username) external view returns (bool) {
+    function login(string calldata username) external returns (bool) {
         uint256 tokenId = usernameToTokenId[username];
-        return tokenId != 0 && ownerOf(tokenId) == msg.sender;
+        require(tokenId != 0, "Account does not exist.");
+        require(ownerOf(tokenId) == msg.sender, "You do not own this account");
+
+        reportManager.checkSuspension(tokenId);
+        require(!reportManager.isSuspended(tokenId), "Account is suspended");
+
+        return true;
     }
 
     // Optional: Deactivate account by burning the token and freeing the username
@@ -101,4 +112,27 @@ contract DecenSocialAccount is ERC721, Ownable {
     function setVerificationFee(uint256 fee) external onlyOwner {
         verificationFee = fee;
     }
+
+
+        // Set follow fee for an account
+    function setFollowFee(uint256 tokenId, uint256 fee) external {
+        require(_exists(tokenId), "Token does not exist");
+        require(ownerOf(tokenId) == msg.sender, "You do not own this account");
+        followFees[tokenId] = fee;
+    }
+
+    // Get the follow fee for an account
+    function getFollowFee(uint256 tokenId) external view returns (uint256) {
+        require(_exists(tokenId), "Token does not exist");
+        return followFees[tokenId];
+    }
+
+
+    // Set the report manager contract address for the token (only owner)
+    function setReportManager(address _reportManager) external onlyOwner {
+        require(_reportManager != address(0), "Invalid report manager address");
+        reportManager = ReportManager(_reportManager);
+    }
+
+    
 }

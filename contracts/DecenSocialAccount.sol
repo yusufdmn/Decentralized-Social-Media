@@ -54,6 +54,9 @@ contract DecenSocialAccount is ERC721, Ownable {
         require(_exists(tokenId), "Token does not exist");
         return usernames[tokenId];
     }
+    function getAccountId(string calldata username) public view returns (uint256){
+        return usernameToTokenId[username];
+    }
 
     // Login function to check if msg.sender owns an account with the provided username
     function login(string calldata username) external returns (bool) {

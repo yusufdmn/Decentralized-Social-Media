@@ -11,6 +11,7 @@ contract ReportManager is Ownable {
         address reported;
     }
 
+    DecenSocialAccount private accountContract;
     FollowManager private followManager;
 
     // Mappings to manage reports and suspensions
@@ -24,16 +25,18 @@ contract ReportManager is Ownable {
     // Record to ensure no duplicate reports
     mapping(bytes32 => bool) private reportExists;
 
-    uint256 private minReportsForSuspension = 1;
+    uint256 public minReportsForSuspension = 2;
 
     event UserSuspended(uint256 indexed userID, uint256 suspensionExpiry);
     event UserSuspensionLifted(uint256 indexed userID);
 
-    constructor(address _followManagerAddress) {
+    constructor(address _accountContract, address _followManagerAddress) {
+        accountContract = DecenSocialAccount(_accountContract);
         followManager = FollowManager(_followManagerAddress);
     }
 
     function reportUser(uint256 reporterId, uint256 reportedId) external {
+        require(accountContract.ownerOf(reporterId)  == msg.sender, "You don't own reporter account");
         require(reporterId != reportedId, "Cannot report yourself");
         require(followManager.isFollowingUser(reporterId, reportedId), "Cannot report user you don't follow");
 

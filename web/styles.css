@@ -1,0 +1,134 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin-top: 50px;
+}
+
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.stats {
+    margin-top: 20px;
+    font-size: 18px;
+}
+
+.posts {
+    margin-top: 30px;
+}
+
+.post-item {
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    text-align: left;
+}
+
+.btn {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.follow-btn:hover {
+    background-color: #0056b3;
+}
+
+.popup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 20px;
+    z-index: 1000;
+}
+
+.popup h3 {
+    margin-top: 0;
+}
+
+.popup ul {
+    list-style: none;
+    padding: 0;
+}
+
+.popup li {
+    margin: 10px 0;
+}
+
+.popup li a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.popup li a:hover {
+    text-decoration: underline;
+}
+
+.popup-close {
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.popup-close:hover {
+    background-color: #0056b3;
+}
+
+.overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+
+#followers-text {
+    cursor: pointer;
+    color: #007bff; /* Optional: Add a link-like color */
+}
+
+#followers-text:hover {
+    text-decoration: underline; /* Optional: Add underline on hover */
+}
+
+#following-text {
+    cursor: pointer;
+    color: #007bff; /* Optional: Add a link-like color */
+}
+
+#following-text:hover {
+    text-decoration: underline; /* Optional: Add underline on hover */
+}
+
+#profile-text {
+    color: #0d00ff; /* Optional: Add a link-like color */
+}
+

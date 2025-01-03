@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DecenSocial - Login</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .alert {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid;
+            border-radius: 5px;
+        }
+
+        .alert.success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+
+        .alert.error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        ul li {
+            margin: 10px 0;
+        }
+
+        ul li button {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Login</h1>
+        <p>Select an account to login:</p>
+        <ul id="accountList"></ul>
+        <div id="alert" class="alert" style="display: none;"></div>
+    </div>
+
+    <script>
+        let web3;
+        let account;
+
+        const contracts = {
+            DecenSocialAccount: {
+                address: null,
+                abi: null
+            }
+        };
+
+        async function loadData() {
+            for (const [key, contract] of Object.entries(contracts)) {
+                // Load ABI
+                const abiResponse = await fetch(`ABIs/${key}.txt`);
+                contract.abi = JSON.parse(await abiResponse.text());
+
+                // Load address
+                const addressResponse = await fetch(`hashes/${key}.txt`);
+                contract.address = (await addressResponse.text()).trim();
+            }
+        }
+
+        async function initialize() {
+            if (typeof window.ethereum !== 'undefined') {
+                web3 = new Web3(window.ethereum);
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                account = (await web3.eth.getAccounts())[0];
+
+                await loadData();
+
+                for (const contract of Object.values(contracts)) {
+                    contract.instance = new web3.eth.Contract(contract.abi, contract.address);
+                }
+
+                loadAccounts();
+            } else {
+                alert("Please install MetaMask!");
+            }
+        }
+
+        async function loadAccounts() {
+            const accountContract = contracts.DecenSocialAccount.instance;
+            const alertBox = document.getElementById('alert');
+
+            try {
+                // Fetch all token IDs owned by the connected wallet
+                const totalSupply = await accountContract.methods.nextTokenId().call();
+                const accountList = [];
+                for (let tokenId = 1; tokenId <= totalSupply; tokenId++) {
+                    if ((await accountContract.methods.ownerOf(tokenId).call()) === account) {
+                        const username = await accountContract.methods.getUsername(tokenId).call();
+                        accountList.push({ tokenId, username });
+                    }
+                }
+
+                if (accountList.length === 0) {
+                    alertBox.style.display = "block";
+                    alertBox.className = "alert error";
+                    alertBox.innerHTML = `
+    No accounts found for this wallet. Please register an account.
+    <br>
+    <button onclick="window.location.href='register.html'" style="margin-top: 10px; padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+        Register Account
+    </button>
+`;
+                    return;
+                }
+
+                // Display the accounts in a list
+                const accountListElement = document.getElementById('accountList');
+                accountListElement.innerHTML = '';
+                accountList.forEach(({ tokenId, username }) => {
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `
+                        <button onclick="loginAccount(${tokenId})">
+                            Account: ${username} (Token ID: ${tokenId})
+                        </button>
+                    `;
+                    accountListElement.appendChild(listItem);
+                });
+            } catch (error) {
+                alertBox.style.display = "block";
+                alertBox.className = "alert error";
+                alertBox.textContent = `Error loading accounts: ${error.message}`;
+            }
+        }
+
+        async function loginAccount(tokenId) {
+            const accountContract = contracts.DecenSocialAccount.instance;
+            const alertBox = document.getElementById('alert');
+
+            try {
+                // TODO:  Check if the account is suspended
+                
+                // Save the selected account ID in local storage
+                localStorage.setItem('ourTokenId', tokenId);
+                alertBox.style.display = "block";
+                alertBox.className = "alert success";
+                alertBox.textContent = `Login successful! Logged in as ${tokenId}.`;
+                window.location.href = "index.html"; // Redirect to homepage
+            } catch (error) {
+                alertBox.style.display = "block";
+                alertBox.className = "alert error";
+                alertBox.textContent = error.message;
+            }
+        }
+
+        window.addEventListener('load', initialize);
+    </script>
+</body>
+</html>

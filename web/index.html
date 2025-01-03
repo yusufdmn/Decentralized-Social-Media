@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DecenSocial - Home</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .post {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+        }
+
+        .post h4 {
+            margin: 0 0 10px;
+        }
+
+        .post p {
+            margin: 0;
+        }
+
+        .loader {
+            margin: 50px auto;
+            border: 5px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 5px solid #007bff;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to DecenSocial</h1>
+        <div id="posts-container"></div>
+        <div id="loader" class="loader" style="display: none;"></div>
+    </div>
+
+    <script>
+        let web3;
+        let account;
+        const contracts = {
+            DecenSocialAccount: { address: null, abi: null, instance: null },
+            FollowManager: { address: null, abi: null, instance: null },
+            PostManager: { address: null, abi: null, instance: null },
+        };
+
+        async function loadContracts() {
+            for (const [key, contract] of Object.entries(contracts)) {
+                // Load ABI
+                const abiResponse = await fetch(`ABIs/${key}.txt`);
+                contract.abi = JSON.parse(await abiResponse.text());
+
+                // Load Address
+                const addressResponse = await fetch(`hashes/${key}.txt`);
+                contract.address = (await addressResponse.text()).trim();
+
+                // Initialize Contract Instance
+                contract.instance = new web3.eth.Contract(contract.abi, contract.address);
+            }
+        }
+
+        async function initialize() {
+            if (typeof window.ethereum !== 'undefined') {
+                web3 = new Web3(window.ethereum);
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                account = (await web3.eth.getAccounts())[0];
+
+                await loadContracts();
+                loadPosts();
+            } else {
+                alert("Please install MetaMask!");
+            }
+        }
+
+        async function loadPosts() {
+            const loader = document.getElementById('loader');
+            const postsContainer = document.getElementById('posts-container');
+            loader.style.display = 'block';
+
+            try {
+                const accountContract = contracts.DecenSocialAccount.instance;
+                const followManager = contracts.FollowManager.instance;
+                const postManager = contracts.PostManager.instance;
+
+                // Fetch current account ID
+                const accountId = await accountContract.methods.getAccountIdByOwner(account).call();
+
+                // Get followers of the account
+                const followers = await followManager.methods.getFollowersOfUser(accountId).call();
+
+                // Fetch all posts from followers
+                const allPosts = [];
+
+                for (const followerId of followers) {
+                    const followerPosts = await postManager.methods.getPostsOfUser(followerId).call();
+                    allPosts.push(...followerPosts);
+                }
+
+                // Sort posts by timestamp in descending order
+                allPosts.sort((a, b) => b.timestamp - a.timestamp);
+
+                // Render posts
+                postsContainer.innerHTML = '';
+                allPosts.forEach(post => {
+                    const postElement = document.createElement('div');
+                    postElement.className = 'post';
+
+                    postElement.innerHTML = `
+                        <h4>Post by Account ID: ${post.accountId}</h4>
+                        <p>${post.content}</p>
+                        <small>${new Date(post.timestamp * 1000).toLocaleString()}</small>
+                    `;
+
+                    postsContainer.appendChild(postElement);
+                });
+            } catch (error) {
+                console.error("Error loading posts:", error);
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        window.addEventListener('load', initialize);
+    </script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DecenSocial - Register</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        .alert {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid;
+            border-radius: 5px;
+        }
+
+        .alert.success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+
+        .alert.error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Register</h1>
+        <input type="text" id="username" placeholder="Enter Desired Username" required>
+        <button onclick="registerUser()">Register</button>
+        <div id="alert" class="alert" style="display: none;"></div>
+    </div>
+
+    <script>
+        let web3;
+        let account;
+        let accountContract;
+
+        async function loadContractData() {
+            // Load contract address
+            const addressResponse = await fetch('hashes/DecenSocialAccount.txt');
+            const contractAddress = (await addressResponse.text()).trim();
+
+            // Load contract ABI
+            const abiResponse = await fetch('ABIs/DecenSocialAccount.txt');
+            const contractABI = JSON.parse(await abiResponse.text());
+
+            return { contractAddress, contractABI };
+        }
+
+        async function initialize() {
+            if (typeof window.ethereum !== 'undefined') {
+                web3 = new Web3(window.ethereum);
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                account = (await web3.eth.getAccounts())[0];
+
+                const { contractAddress, contractABI } = await loadContractData();
+
+                accountContract = new web3.eth.Contract(contractABI, contractAddress);
+            } else {
+                alert("Please install MetaMask!");
+            }
+        }
+
+        async function registerUser() {
+            const username = document.getElementById('username').value;
+            const alertBox = document.getElementById('alert');
+
+            try {
+                if (!username) {
+                    throw new Error("Username is required");
+                }
+
+                // Initiate transaction to createAccount
+                await accountContract.methods.createAccount(username).send({ from: account });
+
+                alertBox.style.display = "block";
+                alertBox.className = "alert success";
+                alertBox.textContent = "Account registered successfully!";
+            } catch (error) {
+                alertBox.style.display = "block";
+                alertBox.className = "alert error";
+                alertBox.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        window.addEventListener('load', initialize);
+    </script>
+</body>
+</html>

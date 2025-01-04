@@ -8,6 +8,14 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
+    <div class="navbar">
+        <a href="index.html">Home</a>
+        <a href="profile.html">Profile</a>
+        <button class="btn" onclick="localStorage.removeItem('ourTokenId'); window.location.href = 'login.html';" style="float: right;">Logout</button>    
+    </div>
+
+
     <div class="container">
         <h1 id="profile-text">Profile</h1>
         <br>
@@ -130,10 +138,13 @@
 
             // Change text of follow button based on whether the user is already following the profile
             const followBtn = document.getElementById('follow-btn');
+            const reportBtn = document.getElementById('report-btn');
+
 
             
-            if (tokenId == ourTokenId) { // If the profile is our own, hide the follow button
+            if (tokenId == ourTokenId) { // If the profile is our own, hide the follow and report button
                 followBtn.style.display = 'none';
+                reportBtn.style.display = 'none';
             } else {
                 console.log("güncelle")
                 if (ourFollowings.includes(BigInt(tokenId))) {
@@ -147,7 +158,6 @@
                 }
             }
 
-            const reportBtn = document.getElementById('report-btn');
             reportBtn.onclick = () => reportProfile(tokenId);
 
 

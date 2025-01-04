@@ -5,79 +5,91 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DecenSocial - Home</title>
     <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 50px;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .post {
-            border: 1px solid #ddd;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 10px;
-            background-color: #f9f9f9;
-        }
-
-        .post h4 {
-            margin: 0 0 10px;
-        }
-
-        .post p {
-            margin: 0;
-        }
-
-        .loader {
-            margin: 50px auto;
-            border: 5px solid #f3f3f3;
-            border-radius: 50%;
-            border-top: 5px solid #007bff;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <div class="navbar">
+        <a href="index.html">Home</a>
+        <a href="profile.html">Profile</a>
+        <textarea id="search-bar" placeholder="Search for users..." style="height: 20px; width: 200px; margin-left: 100px;" ></textarea>
+        <button class="btn" onclick="localStorage.removeItem('ourTokenId'); window.location.href = 'login.html';" style="float: right;">Logout</button>    
+    </div>
+
     <div class="container">
-        <h1>Welcome to DecenSocial</h1>
-        <div id="posts-container"></div>
-        <div id="loader" class="loader" style="display: none;"></div>
+        <h1>Homepage</h1>
+
+        <div id="post-form" class="container">
+            <textarea id="post-content" placeholder="What's on your mind?" style="height: 100px; width: 400px;"></textarea>
+            <button id="post-btn" class="btn">Post</button>
+        </div>
+
+        <br>
+
+        <div id="posts-container" class="container">
+            <h2>Posts</h2>
+            <div id="loader">Loading...</div>
+        </div>
     </div>
 
     <script>
         let web3;
         let account;
+        let ourTokenId;
         const contracts = {
-            DecenSocialAccount: { address: null, abi: null, instance: null },
-            FollowManager: { address: null, abi: null, instance: null },
-            PostManager: { address: null, abi: null, instance: null },
+            FollowManager: {
+                address: null,
+                abi: null
+            },
+            PostManager: {
+                address: null,
+                abi: null
+            },
+            DecenSocialAccount: {
+                address: null,
+                abi: null
+            }
         };
+
+        const searchBar = document.getElementById("search-bar");
+
+        searchBar.addEventListener("keydown", async (e) => {
+    if (e.key === "Enter") {
+        e.preventDefault(); // Prevent new line in textarea
+        await searchUser();
+    }
+});
+
+
+        
+        async function searchUser() {
+    const query = searchBar.value.trim(); // Get the search query
+    if (query) {
+        // Get token ID from username
+        const accountContract = contracts.DecenSocialAccount.instance;
+        try {
+            const tokenId = await accountContract.methods.getAccountId(query).call();
+
+            if (tokenId) {
+                window.location.href = `profile.html?tokenID=${tokenId}`;
+            } else {
+                alert("User not found!");
+            }
+        } catch (error) {
+            console.error("Error fetching user:", error);
+            alert("An error occurred while searching for the user.");
+        }
+    } else {
+        alert("Please enter a username.");
+    }
+}
+
 
         async function loadContracts() {
             for (const [key, contract] of Object.entries(contracts)) {
-                // Load ABI
                 const abiResponse = await fetch(`ABIs/${key}.txt`);
                 contract.abi = JSON.parse(await abiResponse.text());
-
-                // Load Address
                 const addressResponse = await fetch(`hashes/${key}.txt`);
                 contract.address = (await addressResponse.text()).trim();
-
-                // Initialize Contract Instance
-                contract.instance = new web3.eth.Contract(contract.abi, contract.address);
             }
         }
 
@@ -88,61 +100,114 @@
                 account = (await web3.eth.getAccounts())[0];
 
                 await loadContracts();
-                loadPosts();
+
+                for (const contract of Object.values(contracts)) {
+                    contract.instance = new web3.eth.Contract(contract.abi, contract.address);
+                }
+
+                ourTokenId = localStorage.getItem("ourTokenId");
+                if (!ourTokenId) {
+                    alert("Please login first!");
+                    window.location.href = "login.html";
+                }
+
+                await loadHomePage();
             } else {
                 alert("Please install MetaMask!");
             }
         }
 
-        async function loadPosts() {
-            const loader = document.getElementById('loader');
-            const postsContainer = document.getElementById('posts-container');
-            loader.style.display = 'block';
+        async function loadHomePage() {
+            
+            const followManager = contracts.FollowManager.instance;
+            const postManager = contracts.PostManager.instance;
+            const accountContract = contracts.DecenSocialAccount.instance;
 
-            try {
-                const accountContract = contracts.DecenSocialAccount.instance;
-                const followManager = contracts.FollowManager.instance;
-                const postManager = contracts.PostManager.instance;
+            console.log("burası", document.getElementById("loader"));
+            document.getElementById("loader").style.display = "block";
 
-                // Fetch current account ID
-                const accountId = await accountContract.methods.getAccountIdByOwner(account).call();
+            // Get followings and include own account
+            const followings = await followManager.methods.getFollowingsOfUser(ourTokenId).call();
+            followings.push(ourTokenId); // Include user's own account
 
-                // Get followers of the account
-                const followers = await followManager.methods.getFollowersOfUser(accountId).call();
+            const allPosts = [];
+            for (const accountId of followings) {
+                const posts = await postManager.methods.getPostsOfUser(accountId).call();
 
-                // Fetch all posts from followers
-                const allPosts = [];
-
-                for (const followerId of followers) {
-                    const followerPosts = await postManager.methods.getPostsOfUser(followerId).call();
-                    allPosts.push(...followerPosts);
+                for (const post of posts) {
+                    const username = await accountContract.methods.getUsername(accountId).call();
+                    allPosts.push({ ...post, username });
                 }
-
-                // Sort posts by timestamp in descending order
-                allPosts.sort((a, b) => b.timestamp - a.timestamp);
-
-                // Render posts
-                postsContainer.innerHTML = '';
-                allPosts.forEach(post => {
-                    const postElement = document.createElement('div');
-                    postElement.className = 'post';
-
-                    postElement.innerHTML = `
-                        <h4>Post by Account ID: ${post.accountId}</h4>
-                        <p>${post.content}</p>
-                        <small>${new Date(post.timestamp * 1000).toLocaleString()}</small>
-                    `;
-
-                    postsContainer.appendChild(postElement);
-                });
-            } catch (error) {
-                console.error("Error loading posts:", error);
-            } finally {
-                loader.style.display = 'none';
             }
+
+            // Sort posts by timestamp (newest first)
+            allPosts.sort((a, b) => Number(b.timestamp) - Number(a.timestamp));
+            displayPosts(allPosts);
+
+            console.log("home page loaded");
         }
 
-        window.addEventListener('load', initialize);
+        
+        function displayPosts(posts) {
+    const postsContainer = document.getElementById("loader");
+    postsContainer.innerHTML = "";
+
+    if (posts.length === 0) {
+        postsContainer.textContent = "No posts available.";
+        return;
+    }
+
+    posts.forEach(post => {
+        const postDiv = document.createElement("div");
+        postDiv.className = "post-item";
+
+        const timestamp = new Date(Number(post.timestamp) * 1000).toLocaleString();
+        const contentDiv = document.createElement("div");
+        contentDiv.className = "post-content";
+        contentDiv.textContent = post.content;
+
+        const postInfoDiv = document.createElement("div");
+        postInfoDiv.className = "post-info";
+
+        // Create clickable username
+        const usernameLink = document.createElement("a");
+        usernameLink.href = `profile.html?tokenID=${post.accountId}`;
+        usernameLink.textContent = post.username;
+        usernameLink.className = "post-username";
+
+        const timestampSpan = document.createElement("small");
+        timestampSpan.textContent = ` - ${timestamp}`;
+
+        postInfoDiv.appendChild(usernameLink);
+        postInfoDiv.appendChild(timestampSpan);
+
+        postDiv.appendChild(postInfoDiv);
+        postDiv.appendChild(contentDiv);
+        postsContainer.appendChild(postDiv);
+    });
+}
+
+
+        document.getElementById("post-btn").addEventListener("click", async () => {
+            const postManager = contracts.PostManager.instance;
+            const content = document.getElementById("post-content").value;
+
+            if (!content || content.trim() === "") {
+                alert("Post content cannot be empty.");
+                return;
+            }
+
+            if (content.length > 140) {
+                alert("Post content exceeds 140 characters.");
+                return;
+            }
+
+            await postManager.methods.createPost(ourTokenId, content).send({ from: account });
+            document.getElementById("post-content").value = "";
+            await loadHomePage();
+        });
+
+        window.addEventListener("load", initialize);
     </script>
 </body>
 </html>

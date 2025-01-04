@@ -19,7 +19,7 @@
         <h1>Homepage</h1>
 
         <div id="post-form" class="container">
-            <textarea id="post-content" placeholder="What's on your mind?" style="height: 100px; width: 400px;"></textarea>
+            <textarea id="post-content" placeholder="What's on your mind?" style="height: 100px; width: 400px;" maxlength="140"></textarea>
             <button id="post-btn" class="btn">Post</button>
         </div>
 
@@ -161,7 +161,6 @@
         const postDiv = document.createElement("div");
         postDiv.className = "post-item";
 
-        const timestamp = new Date(Number(post.timestamp) * 1000).toLocaleString();
         const contentDiv = document.createElement("div");
         contentDiv.className = "post-content";
         contentDiv.textContent = post.content;
@@ -175,6 +174,9 @@
         usernameLink.textContent = post.username;
         usernameLink.className = "post-username";
 
+        // Calculate the relative time
+        const timestamp = formatTimestamp(post.timestamp);
+
         const timestampSpan = document.createElement("small");
         timestampSpan.textContent = ` - ${timestamp}`;
 
@@ -185,6 +187,30 @@
         postDiv.appendChild(contentDiv);
         postsContainer.appendChild(postDiv);
     });
+}
+
+function formatTimestamp(timestamp) {
+    const postTime = new Date(Number(timestamp) * 1000);
+    const now = new Date();
+    const timeDifference = now - postTime; // Difference in milliseconds
+
+    const seconds = Math.floor(timeDifference / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) {
+        // If post is older than 24 hours, show the date
+        return postTime.toLocaleString(); 
+    } else if (hours > 0) {
+        return `${hours} hours ago`;
+    } else if (minutes > 0) {
+        return `${minutes} min ago`;
+    } else if (seconds > 0) {
+        return `${seconds} sec ago`;
+    } else {
+        return "Just now";  // in case time is really very recent (0 seconds)
+    }
 }
 
 

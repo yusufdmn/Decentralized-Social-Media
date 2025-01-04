@@ -31,6 +31,20 @@
 
         <button id="report-btn" class="btn"">Report Profile</button>
 
+        <br>
+        <!-- Display Follow Fee -->
+        <div id="follow-fee-section">
+            <strong id="follow-fee-text">Following Fee:</strong> <span id="follow-fee">Loading...</span>
+        </div>
+
+            <!-- Input for setting the follow fee -->
+        <div id="set-follow-fee-section">
+            <label for="set-follow-fee">Set Follow Fee:</label>
+            <input type="number" id="set-follow-fee" placeholder="Set new follow fee" min="0" />
+            <button id="set-follow-fee-btn">Set Fee</button>
+        </div>
+
+
 
         <div class="posts" id="posts-section">
             <h3>Posts:</h3>
@@ -145,7 +159,10 @@
             if (tokenId == ourTokenId) { // If the profile is our own, hide the follow and report button
                 followBtn.style.display = 'none';
                 reportBtn.style.display = 'none';
+                await loadFollowFee();
             } else {
+                document.getElementById('follow-fee-section').style.display = 'none';
+                document.getElementById('set-follow-fee-section').style.display = 'none';
                 console.log("güncelle")
                 if (ourFollowings.includes(BigInt(tokenId))) {
                     console.log("güncelle2")
@@ -159,7 +176,6 @@
             }
 
             reportBtn.onclick = () => reportProfile(tokenId);
-
 
             await loadPosts(postManager, tokenId);
         }
@@ -242,6 +258,36 @@
             await reportManager.methods.reportUser(ourTokenId, tokenId).send({ from: account });
             alert("Profile reported successfully!");
         }
+
+        // Fetch current follow fee and display it
+async function loadFollowFee() {
+    const accountContract = contracts.DecenSocialAccount.instance;
+    const followFee = await accountContract.methods.getFollowFee(ourTokenId).call();
+    document.getElementById("follow-fee").textContent = web3.utils.fromWei(followFee, "ether");
+}
+
+// Update the follow fee
+document.getElementById("set-follow-fee-btn").addEventListener("click", async () => {
+    const newFollowFee = document.getElementById("set-follow-fee").value;
+
+    if (!newFollowFee || newFollowFee <= 0) {
+        alert("Please enter a valid follow fee.");
+        return;
+    }
+
+    const accountContract = contracts.DecenSocialAccount.instance;
+    try {
+        await accountContract.methods.setFollowFee(ourTokenId, web3.utils.toWei((newFollowFee), "ether")).send({ from: account });
+        alert("Follow fee updated successfully!");
+        loadFollowFee(); // Refresh the follow fee after setting it
+    } catch (error) {
+        console.error("Error setting follow fee", error);
+        alert("Failed to update follow fee.");
+    }
+});
+
+
+
 
     </script>
 </body>

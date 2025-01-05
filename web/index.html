@@ -149,7 +149,7 @@
         }
 
         
-        function displayPosts(posts) {
+        async function displayPosts(posts) {
     const postsContainer = document.getElementById("loader");
     postsContainer.innerHTML = "";
 
@@ -158,7 +158,7 @@
         return;
     }
 
-    posts.forEach(post => {
+    for (const post of posts) {
         const postDiv = document.createElement("div");
         postDiv.className = "post-item";
 
@@ -172,7 +172,23 @@
         // Create clickable username
         const usernameLink = document.createElement("a");
         usernameLink.href = `profile.html?tokenID=${post.accountId}`;
-        usernameLink.textContent = post.username;
+
+        const username = post.username;
+        try {
+            const isVerified = await accountContract.methods.getVerifiedName(post.accountId).call();
+            // If the user is verified, display the verified badge
+            if (isVerified) {
+                usernameLink.innerHTML = `<div style="display: inline-flex; align-items: center;">
+                    ${username} <img src="Assets/verified1.png" alt="Verified" width="25" height="25">
+                </div>`;
+            } else {
+                usernameLink.textContent = username;
+            }
+        } catch (error) {
+            console.error("Error fetching verification status:", error);
+            usernameLink.textContent = username;
+        }
+
         usernameLink.className = "post-username";
 
         // Calculate the relative time
@@ -187,8 +203,9 @@
         postDiv.appendChild(postInfoDiv);
         postDiv.appendChild(contentDiv);
         postsContainer.appendChild(postDiv);
-    });
+    }
 }
+
 
 function formatTimestamp(timestamp) {
     const postTime = new Date(Number(timestamp) * 1000);

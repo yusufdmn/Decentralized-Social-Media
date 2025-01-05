@@ -135,7 +135,11 @@
 
             try {
                 const isVerified = await accountContract.methods.getVerifiedName(tokenId).call();
-                document.getElementById('username').innerHTML = `${username} (Verified)`;
+                // If the user is verified, display the verified badge verification.png
+                if (isVerified) {
+                    document.getElementById('username').innerHTML = `<div id="username" style="display: inline-flex; align-items: center;">
+    ${username} <img src="Assets/verified1.png" alt="Verified" width="25" height="25"></div>`;
+                }   
 
             } catch (error) {
                 document.getElementById('username').textContent = username;

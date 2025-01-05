@@ -38,14 +38,7 @@
             <strong id="follow-fee-text">Following Fee:</strong> <span id="follow-fee">Loading...</span>
         </div>
 
-            <!-- Input for setting the follow fee -->
-        <div id="set-follow-fee-section">
-            <label for="set-follow-fee">Set Follow Fee:</label>
-            <input type="number" id="set-follow-fee" placeholder="Set new follow fee" min="0" />
-            <button id="set-follow-fee-btn">Set Fee</button>
-        </div>
-
-
+    
 
         <div class="posts" id="posts-section">
             <h3>Posts:</h3>
@@ -120,6 +113,7 @@
 
 
                 if (urlTokenId) {
+
                     urlTokenId = parseInt(urlTokenId);
                     await loadProfile(urlTokenId);
                 } else {
@@ -171,10 +165,9 @@
             if (tokenId == ourTokenId) { // If the profile is our own, hide the follow and report button
                 followBtn.style.display = 'none';
                 reportBtn.style.display = 'none';
-                await loadFollowFee();
+                await loadFollowFee(tokenId);
             } else {
-                document.getElementById('follow-fee-section').style.display = 'none';
-                document.getElementById('set-follow-fee-section').style.display = 'none';
+                await loadFollowFee(tokenId);
                 console.log("güncelle")
                 if (ourFollowings.includes(BigInt(tokenId))) {
                     console.log("güncelle2")
@@ -254,7 +247,23 @@
 
 
         async function followUser(tokenId) {
+
             const followManager = contracts.FollowManager.instance;
+            const tokenContract = contracts.DecenSocialToken.instance;
+            const accountContract = contracts.DecenSocialAccount.instance
+
+
+             const followFee = await accountContract.methods.getFollowFee(tokenId).call();
+
+
+            const allowance = await tokenContract.methods.allowance(account, contracts.DecenSocialAccount.address).call();
+
+            if (BigInt(allowance) < BigInt(verificationFee)) {
+                await tokenContract.methods.approve(contracts.followManager.address, followFee).send({ from: account });
+                alert("Approval successful! Proceeding with verification.");
+          }
+
+
             await followManager.methods.follow(ourTokenId, tokenId).send({ from: account });
             loadProfile(tokenId);
         }
@@ -272,10 +281,10 @@
         }
 
         // Fetch current follow fee and display it
-async function loadFollowFee() {
+async function loadFollowFee(tokenId) {
     const accountContract = contracts.DecenSocialAccount.instance
-    const followFee = await accountContract.methods.getFollowFee(ourTokenId).call();
-    document.getElementById("follow-fee").textContent = web3.utils.fromWei(followFee, "ether");
+    const followFee = await accountContract.methods.getFollowFee(tokenId).call();
+    document.getElementById("follow-fee").textContent = followFee;
 }
 
 // Update the follow fee

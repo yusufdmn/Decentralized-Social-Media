@@ -161,7 +161,7 @@ document.getElementById("set-follow-fee-btn").addEventListener("click", async ()
 
     const accountContract = contracts.DecenSocialAccount.instance;
     try {
-        await accountContract.methods.setFollowFee(ourTokenId, web3.utils.toWei((newFollowFee), "ether")).send({ from: account });
+        await accountContract.methods.setFollowFee(ourTokenId, newFollowFee).send({ from: account });
         alert("Follow fee updated successfully!");
         loadFollowFee(); // Refresh the follow fee after setting it
     } catch (error) {
@@ -175,6 +175,7 @@ document.getElementById("set-follow-fee-btn").addEventListener("click", async ()
 
 
     async function buyToken() {
+        console.log("amount", document.getElementById("buy-token").value);
         const amount = document.getElementById("buy-token").value;
         if (!amount || amount <= 0) {
             alert("Please enter a valid amount.");
@@ -183,7 +184,7 @@ document.getElementById("set-follow-fee-btn").addEventListener("click", async ()
 
         const tokenContract = contracts.DecenSocialToken.instance;
         try {
-            await tokenContract.methods.buyTokens().send({ from: account, value: web3.utils.toWei(amount, "ether") });
+            await tokenContract.methods.buyTokens().send({ from: account, value: amount });
             alert("Token purchased successfully!");
         } catch (error) {
             console.error("Error buying token", error);

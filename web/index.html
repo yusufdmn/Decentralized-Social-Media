@@ -113,6 +113,7 @@
                 }
 
                 await loadHomePage();
+                await listenForNewPosts(contracts.PostManager.instance, ourTokenId);
             } else {
                 alert("Please install MetaMask!");
             }
@@ -255,6 +256,37 @@ function formatTimestamp(timestamp) {
         });
 
         window.addEventListener("load", initialize);
+        
+    async function listenForNewPosts(accountContract, userAccountId) {
+        // Ensure web3 and the contract instance are initialized
+        if (!accountContract) {
+            console.error("Contract is not initialized!");
+            return;
+        }
+
+        // Listen for the PostCreated event
+        accountContract.events.PostCreated()
+            .on('data', async (event) => {
+                const { postId, accountId, content, timestamp } = event.returnValues;
+
+                // Check if the logged-in user follows the post author
+                try {
+                    const isFollowing = await followManager.methods.isFollowingUser(userAccountId, accountId).call();
+                    if (isFollowing) {
+                        alert(`New post from user ${accountId}: "${content}"`);
+                    }
+                } catch (error) {
+                    console.error("Error checking follow status:", error);
+                }
+            })
+            .on('error', (error) => {
+                console.error("Error listening to PostCreated event:", error);
+            });
+    }
+
+    
+    
+    
     </script>
 </body>
 </html>

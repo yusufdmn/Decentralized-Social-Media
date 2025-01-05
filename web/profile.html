@@ -76,6 +76,10 @@
             ReportManager: {
                 address: null,
                 abi: null
+            },
+            DecenSocialToken: {
+                address: null,
+                abi: null
             }
         };
 
@@ -124,6 +128,13 @@
             } else {
                 alert("Please install MetaMask!");
             }
+
+
+            postManager = contracts.PostManager.instance;
+            accountContract = contracts.DecenSocialAccount.instance;
+            followManager = contracts.FollowManager.instance;
+
+           listenToPostCreatedEvent(postManager, accountContract, followManager);
         }
 
         async function loadProfile(tokenId) {
@@ -258,12 +269,13 @@
 
 
              const followFee = await accountContract.methods.getFollowFee(tokenId).call();
+             console.log("followFee", followFee)
 
 
-            const allowance = await tokenContract.methods.allowance(account, contracts.DecenSocialAccount.address).call();
+            const allowance = await tokenContract.methods.allowance(account, contracts.FollowManager.address).call();
 
-            if (BigInt(allowance) < BigInt(verificationFee)) {
-                await tokenContract.methods.approve(contracts.followManager.address, followFee).send({ from: account });
+            if (BigInt(allowance) < BigInt(followFee)) {
+                await tokenContract.methods.approve(contracts.FollowManager.address, followFee).send({ from: account });
                 alert("Approval successful! Proceeding with verification.");
           }
 
@@ -291,25 +303,47 @@ async function loadFollowFee(tokenId) {
     document.getElementById("follow-fee").textContent = followFee;
 }
 
-// Update the follow fee
-document.getElementById("set-follow-fee-btn").addEventListener("click", async () => {
-    const newFollowFee = document.getElementById("set-follow-fee").value;
 
-    if (!newFollowFee || newFollowFee <= 0) {
-        alert("Please enter a valid follow fee.");
+
+
+
+
+
+
+
+
+
+
+function listenToPostCreatedEvent(postManager, accountContract, followmanager) {
+    if (!postManager || !postManager.events) {
+        console.error("Invalid contract instance or missing events property");
         return;
     }
+    console.log("Listening to PostCreated event...");
 
-    const accountContract = contracts.DecenSocialAccount.instance;
-    try {
-        await accountContract.methods.setFollowFee(ourTokenId, web3.utils.toWei((newFollowFee), "ether")).send({ from: account });
-        alert("Follow fee updated successfully!");
-        loadFollowFee(); // Refresh the follow fee after setting it
-    } catch (error) {
-        console.error("Error setting follow fee", error);
-        alert("Failed to update follow fee.");
-    }
-});
+    postManager.events.PostCreated({
+        fromBlock: 'latest'
+    })
+    .on('data', async event => {
+
+        isFollowing = await followmanager.methods.isFollowingUser(ourTokenId, event.returnValues.accountId).call();
+
+        if (isFollowing) {
+            authorName = await accountContract.methods.getUsername(event.returnValues.accountId).call()
+            alert("New post created from user " + authorName); 
+        }
+
+    })
+}
+
+
+
+
+
+
+
+
+
 
 
 

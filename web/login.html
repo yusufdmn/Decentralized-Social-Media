@@ -150,7 +150,7 @@
                 accountList.forEach(({ tokenId, username }) => {
                     const listItem = document.createElement('li');
                     listItem.innerHTML = `
-                        <button onclick="loginAccount(${tokenId})">
+                        <button onclick="loginAccount(${tokenId}, '${username}')">
                             Account: ${username} (Token ID: ${tokenId})
                         </button>
                     `;
@@ -163,12 +163,18 @@
             }
         }
 
-        async function loginAccount(tokenId) {
+        async function loginAccount(tokenId, username) {
             const accountContract = contracts.DecenSocialAccount.instance;
             const alertBox = document.getElementById('alert');
 
             try {
                 // TODO:  Check if the account is suspended
+
+
+
+                // Call the login function in the smart contract  
+                await accountContract.methods.login(username).send({ from: account });
+
                 
                 // Save the selected account ID in local storage
                 localStorage.setItem('ourTokenId', tokenId);

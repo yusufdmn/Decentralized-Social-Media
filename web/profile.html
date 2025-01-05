@@ -128,6 +128,13 @@
             } else {
                 alert("Please install MetaMask!");
             }
+
+
+            postManager = contracts.PostManager.instance;
+            accountContract = contracts.DecenSocialAccount.instance;
+            followManager = contracts.FollowManager.instance;
+
+           listenToPostCreatedEvent(postManager, accountContract, followManager);
         }
 
         async function loadProfile(tokenId) {
@@ -295,6 +302,46 @@ async function loadFollowFee(tokenId) {
     const followFee = await accountContract.methods.getFollowFee(tokenId).call();
     document.getElementById("follow-fee").textContent = followFee;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+function listenToPostCreatedEvent(postManager, accountContract, followmanager) {
+    if (!postManager || !postManager.events) {
+        console.error("Invalid contract instance or missing events property");
+        return;
+    }
+    console.log("Listening to PostCreated event...");
+
+    postManager.events.PostCreated({
+        fromBlock: 'latest'
+    })
+    .on('data', async event => {
+
+        isFollowing = await followmanager.methods.isFollowingUser(ourTokenId, event.returnValues.accountId).call();
+
+        if (isFollowing) {
+            authorName = await accountContract.methods.getUsername(event.returnValues.accountId).call()
+            alert("New post created from user " + authorName); 
+        }
+
+    })
+}
+
+
+
+
+
+
+
 
 
 

@@ -76,6 +76,10 @@
             ReportManager: {
                 address: null,
                 abi: null
+            },
+            DecenSocialToken: {
+                address: null,
+                abi: null
             }
         };
 
@@ -258,12 +262,13 @@
 
 
              const followFee = await accountContract.methods.getFollowFee(tokenId).call();
+             console.log("followFee", followFee)
 
 
-            const allowance = await tokenContract.methods.allowance(account, contracts.DecenSocialAccount.address).call();
+            const allowance = await tokenContract.methods.allowance(account, contracts.FollowManager.address).call();
 
-            if (BigInt(allowance) < BigInt(verificationFee)) {
-                await tokenContract.methods.approve(contracts.followManager.address, followFee).send({ from: account });
+            if (BigInt(allowance) < BigInt(followFee)) {
+                await tokenContract.methods.approve(contracts.FollowManager.address, followFee).send({ from: account });
                 alert("Approval successful! Proceeding with verification.");
           }
 
@@ -291,25 +296,7 @@ async function loadFollowFee(tokenId) {
     document.getElementById("follow-fee").textContent = followFee;
 }
 
-// Update the follow fee
-document.getElementById("set-follow-fee-btn").addEventListener("click", async () => {
-    const newFollowFee = document.getElementById("set-follow-fee").value;
 
-    if (!newFollowFee || newFollowFee <= 0) {
-        alert("Please enter a valid follow fee.");
-        return;
-    }
-
-    const accountContract = contracts.DecenSocialAccount.instance;
-    try {
-        await accountContract.methods.setFollowFee(ourTokenId, web3.utils.toWei((newFollowFee), "ether")).send({ from: account });
-        alert("Follow fee updated successfully!");
-        loadFollowFee(); // Refresh the follow fee after setting it
-    } catch (error) {
-        console.error("Error setting follow fee", error);
-        alert("Failed to update follow fee.");
-    }
-});
 
 
 

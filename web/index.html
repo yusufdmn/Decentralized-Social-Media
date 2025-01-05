@@ -149,60 +149,63 @@
         }
 
         
-        async function displayPosts(posts) {
-    const postsContainer = document.getElementById("loader");
-    postsContainer.innerHTML = "";
+    async function displayPosts(posts) {
+        const accountContract = contracts.DecenSocialAccount.instance;
+        
+        const postsContainer = document.getElementById("loader");
+        postsContainer.innerHTML = "";
 
-    if (posts.length === 0) {
-        postsContainer.textContent = "No posts available.";
-        return;
-    }
-
-    for (const post of posts) {
-        const postDiv = document.createElement("div");
-        postDiv.className = "post-item";
-
-        const contentDiv = document.createElement("div");
-        contentDiv.className = "post-content";
-        contentDiv.textContent = post.content;
-
-        const postInfoDiv = document.createElement("div");
-        postInfoDiv.className = "post-info";
-
-        // Create clickable username
-        const usernameLink = document.createElement("a");
-        usernameLink.href = `profile.html?tokenID=${post.accountId}`;
-
-        const username = post.username;
-        try {
-            const isVerified = await accountContract.methods.getVerifiedName(post.accountId).call();
-            // If the user is verified, display the verified badge
-            if (isVerified) {
-                usernameLink.innerHTML = `<div style="display: inline-flex; align-items: center;">
-                    ${username} <img src="Assets/verified1.png" alt="Verified" width="25" height="25">
-                </div>`;
-            } else {
-                usernameLink.textContent = username;
-            }
-        } catch (error) {
-            console.error("Error fetching verification status:", error);
-            usernameLink.textContent = username;
+        if (posts.length === 0) {
+            postsContainer.textContent = "No posts available.";
+            return;
         }
 
-        usernameLink.className = "post-username";
+        for (const post of posts) {
+            const postDiv = document.createElement("div");
+            postDiv.className = "post-item";
 
-        // Calculate the relative time
-        const timestamp = formatTimestamp(post.timestamp);
+            const contentDiv = document.createElement("div");
+            contentDiv.className = "post-content";
+            contentDiv.textContent = post.content;
 
-        const timestampSpan = document.createElement("small");
-        timestampSpan.textContent = ` - ${timestamp}`;
+            const postInfoDiv = document.createElement("div");
+            postInfoDiv.className = "post-info";
 
-        postInfoDiv.appendChild(usernameLink);
-        postInfoDiv.appendChild(timestampSpan);
+            // Create clickable username
+            const usernameLink = document.createElement("a");
+            usernameLink.href = `profile.html?tokenID=${post.accountId}`;
 
-        postDiv.appendChild(postInfoDiv);
-        postDiv.appendChild(contentDiv);
-        postsContainer.appendChild(postDiv);
+            const username = post.username;
+            try {
+                const isVerified = await accountContract.methods.getVerifiedName(post.accountId).call();
+                console.log("isVerified", isVerified);
+                // If the user is verified, display the verified badge
+                if (isVerified) {
+                    usernameLink.innerHTML = `<div style="display: inline-flex; align-items: center;">
+                        ${username} <img src="Assets/verified1.png" alt="Verified" width="25" height="25">
+                    </div>`;
+                } 
+
+
+            } catch (error) {
+                console.error("Error fetching verification status:", error);
+                usernameLink.textContent = username;
+            }
+
+            usernameLink.className = "post-username";
+
+            // Calculate the relative time
+            const timestamp = formatTimestamp(post.timestamp);
+
+            const timestampSpan = document.createElement("small");
+            timestampSpan.textContent = ` - ${timestamp}`;
+
+            postInfoDiv.appendChild(usernameLink);
+            postInfoDiv.appendChild(timestampSpan);
+
+            postDiv.appendChild(postInfoDiv);
+            postDiv.appendChild(contentDiv);
+            postsContainer.appendChild(postDiv);
     }
 }
 

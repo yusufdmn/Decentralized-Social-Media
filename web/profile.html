@@ -12,6 +12,7 @@
     <div class="navbar">
         <a href="index.html">Home</a>
         <a href="profile.html">Profile</a>
+        <a href="settings.html">Settings</a>
         <button class="btn" onclick="localStorage.removeItem('ourTokenId'); window.location.href = 'login.html';" style="float: right;">Logout</button>    
     </div>
 
@@ -137,7 +138,18 @@
             const postManager = contracts.PostManager.instance;
 
             const username = await accountContract.methods.getUsername(tokenId).call();
-            document.getElementById('username').textContent = username;
+
+            try {
+                const isVerified = await accountContract.methods.getVerifiedName(tokenId).call();
+                document.getElementById('username').innerHTML = `${username} (Verified)`;
+
+            } catch (error) {
+                document.getElementById('username').textContent = username;
+
+            }
+
+
+        
 
             const followers = await followManager.methods.getFollowersOfUser(tokenId).call();
             const followings = await followManager.methods.getFollowingsOfUser(tokenId).call();
@@ -261,7 +273,7 @@
 
         // Fetch current follow fee and display it
 async function loadFollowFee() {
-    const accountContract = contracts.DecenSocialAccount.instance;
+    const accountContract = contracts.DecenSocialAccount.instance
     const followFee = await accountContract.methods.getFollowFee(ourTokenId).call();
     document.getElementById("follow-fee").textContent = web3.utils.fromWei(followFee, "ether");
 }

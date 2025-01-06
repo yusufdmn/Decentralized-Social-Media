@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DecenSocial - Login</title>
     <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -21,9 +22,11 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
+
+        
         button {
             padding: 10px 20px;
-            background-color: #007bff;
+            background-color: #28a745;
             color: white;
             border: none;
             border-radius: 5px;
@@ -31,8 +34,9 @@
         }
 
         button:hover {
-            background-color: #0056b3;
+            background-color: #218838;
         }
+
 
         .alert {
             margin-top: 20px;
@@ -73,9 +77,17 @@
         <p>Select an account to login:</p>
         <ul id="accountList"></ul>
         <div id="alert" class="alert" style="display: none;"></div>
+        <button onclick="registerUser()">Register</button>
     </div>
 
     <script>
+
+        // open register page
+        function registerUser() {
+            window.location.href = "register.html";
+        }
+
+
         let web3;
         let account;
 

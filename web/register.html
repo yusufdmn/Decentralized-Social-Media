@@ -67,7 +67,7 @@
         <h1>Register</h1>
         <input type="text" id="username" placeholder="Enter Desired Username" required>
         <button onclick="registerUser()">Register</button>
-        <a href="login.html">Login</a>
+        <button onclick="openLogin()">Login</button>
         <div id="alert" class="alert" style="display: none;"></div>
     </div>
 
@@ -101,6 +101,11 @@
             } else {
                 alert("Please install MetaMask!");
             }
+        }
+
+        // Open login page
+        function openLogin() {
+            window.location.href = "login.html";
         }
 
         async function registerUser() {

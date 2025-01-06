@@ -35,38 +35,6 @@
 		"type": "event"
 	},
 	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "userID",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "suspensionExpiry",
-				"type": "uint256"
-			}
-		],
-		"name": "UserSuspended",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "userID",
-				"type": "uint256"
-			}
-		],
-		"name": "UserSuspensionLifted",
-		"type": "event"
-	},
-	{
 		"inputs": [
 			{
 				"internalType": "uint256",
@@ -96,9 +64,9 @@
 		"name": "getReports",
 		"outputs": [
 			{
-				"internalType": "address[]",
+				"internalType": "uint256[]",
 				"name": "",
-				"type": "address[]"
+				"type": "uint256[]"
 			}
 		],
 		"stateMutability": "view",

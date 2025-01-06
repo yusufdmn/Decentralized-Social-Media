@@ -19,12 +19,12 @@ contract DecenSocialAccount is ERC721, Ownable {
     // Mapping to store full names for verified accounts
     mapping(uint256 => string) public verifiedNames;
 
-    // Address of the DecenSocialToken (DST00) contract
+    // Address of the DecenSocialToken (DST) 
     IERC20 public socialToken;
 
     ReportManager private reportManager;
 
-    // Fee for account verification in DST00 tokens
+    // Fee for account verification in DST tokens
     uint256 public verificationFee;
 
     // Mapping to store follow fees for each account
@@ -32,7 +32,7 @@ contract DecenSocialAccount is ERC721, Ownable {
 
 
     constructor(IERC20 _socialToken) ERC721("DecenSocialAccount", "DSA") {
-        verificationFee = 5; // temporary for now
+        verificationFee = 50; // temporary for now
         socialToken = IERC20(_socialToken);
 
     }
@@ -58,7 +58,7 @@ contract DecenSocialAccount is ERC721, Ownable {
         return usernameToTokenId[username];
     }
 
-    // Login function to check if msg.sender owns an account with the provided username
+    // Login function to check if msg.sender owns an account with the provided username and is not suspended
     function login(string calldata username) external returns (bool) {
         uint256 tokenId = usernameToTokenId[username];
         require(tokenId != 0, "Account does not exist.");
@@ -70,7 +70,7 @@ contract DecenSocialAccount is ERC721, Ownable {
         return true;
     }
 
-    // Optional: Deactivate account by burning the token and freeing the username
+    
     function deactivateAccount(string calldata username) external {
         uint256 tokenId = usernameToTokenId[username];
         require(tokenId != 0 && ownerOf(tokenId) == msg.sender, "You do not own this account");
@@ -82,7 +82,7 @@ contract DecenSocialAccount is ERC721, Ownable {
     }
 
 
-// Verify account by paying DST and providing a full name
+    // Verify account by paying DST and providing a full name
     function verifyAccount(uint256 tokenId, string calldata fullName) external payable returns(bool success){
         require(_exists(tokenId), "Token does not exist");
         require(ownerOf(tokenId) == msg.sender, "You do not own this account");
@@ -111,13 +111,13 @@ contract DecenSocialAccount is ERC721, Ownable {
         return verifiedNames[tokenId];
     }
 
-    // Update the verification fee (only owner)
+    // Update the verification fee
     function setVerificationFee(uint256 fee) external onlyOwner {
         verificationFee = fee;
     }
 
 
-        // Set follow fee for an account
+    // Set follow fee for an account
     function setFollowFee(uint256 tokenId, uint256 fee) external {
         require(_exists(tokenId), "Token does not exist");
         require(ownerOf(tokenId) == msg.sender, "You do not own this account");
@@ -131,7 +131,7 @@ contract DecenSocialAccount is ERC721, Ownable {
     }
 
 
-    // Set the report manager contract address for the token (only owner)
+    // Set the report manager contract address for the token
     function setReportManager(address _reportManager) external onlyOwner {
         require(_reportManager != address(0), "Invalid report manager address");
         reportManager = ReportManager(_reportManager);

@@ -30,7 +30,7 @@
             <!-- Input for setting the follow fee -->
         <div id="set-follow-fee-section">
             <label for="set-follow-fee">Set Follow Fee:</label>
-            <input type="number" id="set-follow-fee" placeholder="in Ethers" min="0" />
+            <input type="number" id="set-follow-fee" placeholder="in wei" min="0" />
             <button id="set-follow-fee-btn">Set Fee</button>
         </div>
 
@@ -44,8 +44,8 @@
        <br>
 
         <div id="buy-token-section">
-            <label for="buy-token">Buy Token(1 token 1 wei):</label>
-            <input type="number" id="buy-token" placeholder="in Ethers" min="0" />
+            <label for="buy-token">Buy Token(1 DST = 50 wei):</label>
+            <input type="number" id="buy-token" placeholder="in wei" min="0" />
             <button id="buy-token-btn">Buy</button>
         </div>
 
@@ -53,7 +53,7 @@
         <br>
 
         <div id="verify-section">
-            <label for="verify">Verify Account:</label>
+            <label for="verify">Verify Account (50 DST):</label>
             <input type="text" id="verify" placeholder="Enter your full name" />
             <button id="verify-btn">Verify</button>
         </div>
@@ -150,7 +150,7 @@
 async function loadFollowFee() {
     const accountContract = contracts.DecenSocialAccount.instance
     const followFee = await accountContract.methods.getFollowFee(ourTokenId).call();
-    document.getElementById("follow-fee").textContent = followFee;
+    document.getElementById("follow-fee").textContent = followFee + " DST";
 }
 
 // Update the follow fee
@@ -200,7 +200,7 @@ document.getElementById("set-follow-fee-btn").addEventListener("click", async ()
     async function loadTokenBalance() {
         const tokenContract = contracts.DecenSocialToken.instance;
         const balance = await tokenContract.methods.balanceOf(account).call();
-        document.getElementById("token-balance").textContent = balance;
+        document.getElementById("token-balance").textContent = balance + " DST";
         
     }
 

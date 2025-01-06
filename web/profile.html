@@ -300,7 +300,7 @@
 async function loadFollowFee(tokenId) {
     const accountContract = contracts.DecenSocialAccount.instance
     const followFee = await accountContract.methods.getFollowFee(tokenId).call();
-    document.getElementById("follow-fee").textContent = followFee;
+    document.getElementById("follow-fee").textContent = followFee + " DST";
 }
 
 

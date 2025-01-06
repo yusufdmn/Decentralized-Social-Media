@@ -59,12 +59,12 @@ contract DecenSocialAccount is ERC721, Ownable {
     }
 
     // Login function to check if msg.sender owns an account with the provided username and is not suspended
-    function login(string calldata username) external view returns (bool) {
+    function login(string calldata username) external returns (bool) {
         uint256 tokenId = usernameToTokenId[username];
         require(tokenId != 0, "Account does not exist.");
         require(ownerOf(tokenId) == msg.sender, "You do not own this account");
 
-        //reportManager.checkSuspension(tokenId);
+        reportManager.checkSuspension(tokenId);
         require(!reportManager.isSuspended(tokenId), "Account is suspended");
 
         return true;

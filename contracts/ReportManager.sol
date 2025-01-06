@@ -6,36 +6,30 @@ import "./FollowManager.sol";
 
 
 contract ReportManager is Ownable {
-    struct Report {
-        address reporter;
-        address reported;
-    }
-
+ 
     DecenSocialAccount private accountContract;
     FollowManager private followManager;
 
     // Mappings to manage reports and suspensions
-    mapping(uint256 => address[]) private reportedBy; // Reporter -> Reported array
-    mapping(uint256 => uint256) public reportCounts;
-    mapping(uint256 => bool) public isSuspended;
+    mapping(uint256 => uint256[]) private reportersOfUser; // Reported id -> Reporters id
+    mapping(uint256 => uint256) public reportCounts; // Reported id -> Report Counts
+    mapping(uint256 => bool) public isSuspended;  // account id -> Is Suspended Flag
 
     uint256 public suspensionDuration = 5 minutes;
-    mapping(uint256 => uint256) public suspensionExpiry;
+    mapping(uint256 => uint256) public suspensionExpiry; // suspended account id -> Suspension expiry timestamp
 
     // Record to ensure no duplicate reports
-    mapping(bytes32 => bool) private reportExists;
+     mapping(bytes32 => bool) private reportExists;
 
     uint256 public minReportsForSuspension = 2;
 
-    event UserSuspended(uint256 indexed userID, uint256 suspensionExpiry);
-    event UserSuspensionLifted(uint256 indexed userID);
 
     constructor(address _accountContract, address _followManagerAddress) {
         accountContract = DecenSocialAccount(_accountContract);
         followManager = FollowManager(_followManagerAddress);
     }
 
-    function reportUser(uint256 reporterId, uint256 reportedId) external {
+    function reportUser(uint256 reporterId, uint256 reportedId) public {
         require(accountContract.ownerOf(reporterId)  == msg.sender, "You don't own reporter account");
         require(reporterId != reportedId, "Cannot report yourself");
         require(followManager.isFollowingUser(reporterId, reportedId), "Cannot report user you don't follow");
@@ -44,7 +38,7 @@ contract ReportManager is Ownable {
         require(!reportExists[reportHash], "User already reported by this reporter");
 
         reportExists[reportHash] = true;
-        reportedBy[reportedId].push(tx.origin);
+        reportersOfUser[reportedId].push(reporterId);
         reportCounts[reportedId]++;
 
         checkSuspension(reportedId); // suspend or lift suspension if necessary
@@ -80,14 +74,18 @@ contract ReportManager is Ownable {
         isSuspended[userID] = true;
         suspensionExpiry[userID] = block.timestamp + suspensionDuration;
 
-        emit UserSuspended(userID, suspensionExpiry[userID]);
     }
 
     
     function liftSuspension(uint256 userID) internal {
         isSuspended[userID] = false; // Lift suspension
+        for(uint256 i = 0 ; i < reportCounts[userID] ; i++){
+            bytes32 reportHash = keccak256(abi.encodePacked(userID, reportersOfUser[i]));
+            delete reportExists[reportHash];
+        }
+        delete suspensionExpiry[userID]; // Remove suspension expiry timestamp from mapping
+        delete reportersOfUser[userID];
         reportCounts[userID] = 0; // Reset report counts for the user
-        emit UserSuspensionLifted(userID);
     }
 
     
@@ -96,7 +94,7 @@ contract ReportManager is Ownable {
         suspensionDuration = duration;
     }
 
-    function getReports(uint256 userID) external view returns (address[] memory) {
-        return reportedBy[userID];
+    function getReports(uint256 userID) external view returns (uint256[] memory) {
+        return reportersOfUser[userID];
     }
 }

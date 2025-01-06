@@ -7,7 +7,6 @@ contract PostManager {
     // Reference to the DecenSocialAccount contract
     DecenSocialAccount private accountContract;
 
-    // Struct to represent a post
     struct Post {
         uint256 postId;
         uint256 accountId;
@@ -21,7 +20,7 @@ contract PostManager {
     // Total posts counter
     uint256 public totalPosts;
 
-    // Event for new post creation
+    // Event for new posts
     event PostCreated(
         uint256 indexed postId,
         uint256 indexed accountId,
@@ -29,7 +28,6 @@ contract PostManager {
         uint256 timestamp
     );
 
-    // Constructor to initialize the account contract
     constructor(address accountContractAddress) {
         accountContract = DecenSocialAccount(accountContractAddress);
     }

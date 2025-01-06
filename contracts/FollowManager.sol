@@ -17,12 +17,6 @@ contract FollowManager {
     // Mapping from user ID to their followings
     mapping(uint256 => uint256[]) private followings;
 
-    // Event emitted when a user follows another user
-    event Followed(uint256 indexed followerId, uint256 indexed followingId);
-
-    // Event emitted when a user unfollows another user
-    event Unfollowed(uint256 indexed followerId, uint256 indexed followingId);
-
     constructor(address accountContractAddress, address tokenAddress) {
         accountContract = DecenSocialAccount(accountContractAddress);
         paymentToken = IERC20(tokenAddress);
@@ -50,8 +44,6 @@ contract FollowManager {
         followers[followingId].push(followerId);
         followings[followerId].push(followingId);
 
-        // Emit Followed event
-        emit Followed(followerId, followingId);
     }
 
     // Unfollow a user
@@ -63,8 +55,6 @@ contract FollowManager {
         _removeFromList(followers[followingId], followerId);
         _removeFromList(followings[followerId], followingId);
 
-        // Emit Unfollowed event
-        emit Unfollowed(followerId, followingId);
     }
 
     // Get followers of a user
@@ -77,7 +67,7 @@ contract FollowManager {
         return followings[userId];
     }
 
-    // Internal function to remove an ID from a list
+    // remove an ID from a list
     function _removeFromList(uint256[] storage list, uint256 id) internal {
         for (uint256 i = 0; i < list.length; i++) {
             if (list[i] == id) {
